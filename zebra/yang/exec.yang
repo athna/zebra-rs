@@ -91,6 +91,31 @@ module exec {
         }
       }
     }
+
+    container isis {
+      ext:help "IS-IS commands";
+      presence "IS-IS instance";
+      leaf summary {
+        ext:help "IS-IS summary";
+        type empty;
+      }
+      container neighbor {
+        ext:help "IS-IS neighbor";
+        presence "IS-IS neighbor";
+        leaf detail {
+          ext:help "IS-IS neighbor detail";
+          type empty;
+        }
+      }
+      container database {
+        ext:help "IS-IS database";
+        presence "IS-IS database";
+        leaf detail {
+          ext:help "IS-IS database detail";
+          type empty;
+        }
+      }
+    }
     container ipv6 {
       ext:help "Show IPv6 commands";
       leaf route {
