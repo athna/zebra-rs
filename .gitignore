@@ -2,3 +2,7 @@
 Cargo.lock
 .idea
 .DS_Store
+cli/cli
+CLAUDE.md
+.claude
+zebra-rs.log

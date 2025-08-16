@@ -1,0 +1,16 @@
+module extension {
+  yang-version "1";
+
+  namespace "urn:ietf:params:xml:ns:yang:zebra";
+  prefix "coreswitch";
+
+  extension help {
+    description "help";
+    argument "help";
+  }
+
+  extension sort {
+    description "sort";
+    argument "sort";
+  }
+}

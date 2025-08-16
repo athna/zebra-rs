@@ -1,0 +1,15 @@
+[package]
+name = "cli-helper"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+prost.workspace = true
+tokio.workspace = true
+tokio-stream.workspace = true
+tonic.workspace = true
+
+[build-dependencies]
+tonic-build.workspace = true

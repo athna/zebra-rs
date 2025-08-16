@@ -1,0 +1,632 @@
+module config {
+  yang-version "1";
+
+  namespace "urn:ietf:params:xml:ns:yang:zebra";
+  prefix "config";
+
+  import ietf-inet-types {
+    prefix inet;
+  }
+
+  import ietf-yang-types {
+    prefix yang;
+  }
+
+  import extension {
+    prefix ext;
+  }
+
+  import dhcp {
+    prefix dhcp;
+  }
+
+  import ietf-bgp {
+    prefix bgp;
+  }
+
+  import ietf-bgp-policy {
+    prefix policy;
+  }
+
+  import openconfig-isis-types {
+    prefix isis;
+  }
+
+  grouping config {
+    container logging {
+      leaf output {
+        type enumeration {
+          enum stdout;
+          enum syslog;
+          enum file;
+        }
+      }
+    }
+
+    container system {
+      ext:help "System configuration";
+      description
+        "System group configuration.";
+
+      leaf hostname {
+        type string;
+        description
+          "The name of the host. This name can be a single domain label or the
+           fully qualified domain name of the host.";
+      }
+      container dhcp {
+        uses "dhcp:dhcp";
+      }
+      container etcd {
+        list endpoints {
+          key "url";
+          leaf url {
+            type string;
+          }
+        }
+        leaf path {
+          type string;
+        }
+      }
+    }
+
+    container routing {
+      ext:help "Routing configuration";
+      uses "ietf-bgp:bgp";
+      // uses "policy:defined-sets";
+      container ospf {
+        presence "Enables configuration of OSPFv2";
+        leaf router-id {
+          type inet:ipv4-address;
+        }
+        list network {
+          key prefix;
+          leaf prefix {
+            type inet:ipv4-prefix;
+          }
+          leaf area {
+            mandatory true;
+            type uint8;
+          }
+        }
+      }
+      container isis {
+        presence "Enables configuration of IS-IS";
+        leaf net {
+          // First entry in "router isis" node.
+          ext:sort "1";
+          type isis:net;
+        }
+
+        container distribute {
+          leaf rib {
+            type boolean;
+          }
+        }
+
+        leaf is-type {
+          type enumeration {
+            enum level-1;
+            enum level-1-2;
+            enum level-2-only;
+          }
+        }
+
+        leaf segment-routing {
+          type enumeration {
+            enum mpls;
+            enum srv6;
+          }
+        }
+
+        leaf te-router-id {
+          type inet:ipv4-address;
+        }
+
+        leaf hostname {
+          type string;
+        }
+
+        container timers {
+          leaf hold_time {
+            type uint16;
+          }
+        }
+
+        list interface {
+          // Last item in "router isis" node.
+          ext:sort "-1";
+          key "if-name";
+          leaf if-name {
+            type string;
+          }
+
+          leaf circuit-type {
+            type enumeration {
+              enum level-1;
+              enum level-1-2;
+              enum level-2-only;
+            }
+          }
+
+          leaf link-type {
+            type enumeration {
+              enum lan;
+              enum point-to-point;
+            }
+          }
+
+          leaf priority {
+            type uint8;
+          }
+
+          container hello {
+            leaf padding {
+              type enumeration {
+                enum always;
+                /* enum during-adjacency-only; */
+                enum disable;
+              }
+            }
+          }
+
+          leaf metric {
+            type uint32;
+          }
+
+          container ipv4 {
+            leaf enable {
+              type boolean;
+            }
+            container prefix-sid {
+              leaf index {
+                type uint32;
+              }
+              leaf absolute {
+                type uint32;
+              }
+            }
+          }
+          container ipv6 {
+            leaf enable {
+              type boolean;
+            }
+          }
+        }
+        container tracing {
+          leaf all {
+            type boolean;
+            description "Enable all ISIS tracing";
+          }
+
+          list packet {
+            key "type";
+            leaf "type" {
+              type enumeration {
+                enum "hello";
+                enum "lsp";
+                enum "csnp";
+                enum "psnp";
+                enum "all";
+              }
+            }
+            leaf direction {
+              type enumeration {
+                enum "send";
+                enum "receive";
+                enum "both";
+              }
+              default "both";
+              description "Packet direction to trace";
+            }
+            leaf level {
+              type enumeration {
+                enum "level-1";
+                enum "level-2";
+                enum "both";
+              }
+              default "both";
+              description "ISIS level to trace";
+            }
+          }
+
+          list event {
+            key "type";
+            leaf "type" {
+              type enumeration {
+                enum "dis";
+                enum "lsp-originate";
+                enum "lsp-refresh";
+                enum "lsp-purge";
+                enum "spf-calculation";
+                enum "adjacency";
+                enum "flooding";
+                enum "all";
+              }
+            }
+            leaf level {
+              type enumeration {
+                enum "level-1";
+                enum "level-2";
+                enum "both";
+              }
+              default "both";
+              description "ISIS level to trace";
+            }
+          }
+
+          list fsm {
+            key "type";
+            leaf "type" {
+              type enumeration {
+                enum "ifsm";
+                enum "nfsm";
+                enum "all";
+              }
+            }
+            leaf detail {
+              type boolean;
+              default false;
+              description "Enable detailed FSM state transition tracing";
+            }
+          }
+
+          list database {
+            key "type";
+            leaf "type" {
+              type enumeration {
+                enum "lsdb";
+                enum "spf-tree";
+                enum "rib";
+                enum "all";
+              }
+            }
+            leaf level {
+              type enumeration {
+                enum "level-1";
+                enum "level-2";
+                enum "both";
+              }
+              default "both";
+              description "ISIS level to trace";
+            }
+          }
+
+          container segment-routing {
+            leaf enable {
+              type boolean;
+              description "Enable Segment Routing tracing";
+            }
+            leaf prefix-sid {
+              type boolean;
+              description "Trace prefix SID operations";
+            }
+            leaf adjacency-sid {
+              type boolean;
+              description "Trace adjacency SID operations";
+            }
+          }
+        }
+      }
+      container static {
+        ext:help "Static route configuration";
+        container mpls {
+          list label {
+            key "value";
+            leaf value {
+              type uint32;
+            }
+            list nexthop {
+              key "address";
+              leaf "address" {
+                type inet:ipv4-address;
+                description "Nexthop of the route";
+              }
+              leaf "outgoing-label" {
+                type uint32;
+              }
+            }
+          }
+        }
+
+        container ipv4 {
+          ext:help "IPv4 configuration";
+          list route {
+            key "prefix";
+            leaf prefix {
+              type inet:ipv4-prefix;
+            }
+            list nexthop {
+              key "address";
+              leaf "address" {
+                type inet:ipv4-address;
+                description "Nexthop of the route";
+              }
+              leaf metric {
+                type uint32;
+                description "Metric of the route.";
+              }
+              leaf weight {
+                type uint8;
+                description "Weight of ECMP route.";
+              }
+            }
+            leaf distance {
+              type uint8;
+              description "Distance of the route.";
+            }
+            leaf metric {
+              type uint32;
+              description "Metric of the route.";
+            }
+          }
+
+          list arp {
+            key "address";
+            leaf "address" {
+              type inet:ipv4-address;
+              description "ARP neighbor address";
+            }
+            leaf mac {
+              type yang:mac-address;
+              description "MAC Address";
+            }
+          }
+
+          list srv6 {
+            key "prefix";
+            leaf prefix {
+              type inet:ipv4-prefix;
+            }
+            leaf encap {
+              type enumeration {
+                enum seg6;
+                enum seg6local;
+              }
+            }
+            leaf mode {
+              type enumeration {
+                enum encap;
+                enum inline;
+              }
+            }
+            leaf-list segs {
+              type string;
+              description "SRv6 segments";
+            }
+            leaf action {
+              type enumeration {
+                enum End;
+                enum End.DT4;
+              }
+            }
+            leaf dev {
+              type string;
+              description "Outgoing interface";
+            }
+            leaf table {
+              type uint32;
+            }
+            leaf flavors {
+              type enumeration {
+                enum next-csid;
+                enum psp;
+                enum usp;
+                enum usd;
+              }
+            }
+            leaf lblen {
+              type uint8;
+            }
+            leaf nflen {
+              type uint8;
+            }
+          }
+
+          list lsp {
+            key "prefix";
+            leaf prefix {
+              type inet:ipv4-prefix;
+            }
+            leaf-list encap {
+              type uint32;
+            }
+            leaf "nexthop" {
+              type inet:ipv4-address;
+              description "Nexthop of the route";
+            }
+            leaf metric {
+              type uint32;
+              description "Metric of the route.";
+            }
+          }
+        }
+        container ipv6 {
+          ext:help "IPv6 configuration";
+
+          list neighbor {
+            key "address";
+            leaf "address" {
+              type inet:ipv6-address;
+              description "ARP neighbor address";
+            }
+            leaf mac {
+              type yang:mac-address;
+              description "MAC Address";
+            }
+          }
+
+          list route {
+            key "prefix";
+            leaf prefix {
+              type inet:ipv6-prefix;
+            }
+            list nexthop {
+              key "address";
+              leaf "address" {
+                type inet:ipv6-address;
+                description "Nexthop of the route";
+              }
+              leaf metric {
+                type uint32;
+                description "Metric of the route.";
+              }
+              leaf weight {
+                type uint8;
+                description "Weight of ECMP route.";
+              }
+            }
+            leaf distance {
+              type uint8;
+              description "Distance of the route.";
+            }
+            leaf metric {
+              type uint32;
+              description "Metric of the route.";
+            }
+          }
+        }
+
+      }
+    }
+
+    list community-list {
+      description
+        "Enclosing container for list of defined BGP community
+           sets.";
+      key "name";
+      description
+        "List of defined BGP community sets.";
+      leaf name {
+        type string;
+        description
+          "Name / label of the community set -- this is used to
+               reference the set in match conditions.";
+      }
+      list seq {
+        key "seq";
+        description
+          "List of defined BGP community sets.";
+        leaf seq {
+          type uint32;
+          description
+            "Name / label of the community set -- this is used to
+               reference the set in match conditions.";
+        }
+        leaf action {
+          mandatory true;
+          type enumeration {
+            enum permit;
+            enum deny;
+          }
+        }
+        leaf-list member {
+          type string;
+          description
+            "Members of the community set";
+        }
+      }
+    }
+    list prefix-set {
+      key "name";
+      leaf name {
+        type string;
+      }
+      list "prefixes" {
+        key "prefix";
+        leaf "prefix" {
+          type union {
+            type inet:ipv4-prefix;
+            type inet:ipv6-prefix;
+          }
+        }
+        leaf le {
+          type uint8;
+          description
+            "Members of the prefix set";
+        }
+        leaf eq {
+          type uint8;
+          description
+            "Members of the prefix set";
+        }
+        leaf ge {
+          type uint8;
+          description
+            "Members of the prefix set";
+        }
+      }
+    }
+    list interface {
+      key "if-name";
+      leaf if-name {
+        type string;
+      }
+      container ipv4 {
+        leaf address {
+          type inet:ipv4-prefix;
+        }
+      }
+      container ipv6 {
+        leaf address {
+          type inet:ipv6-prefix;
+        }
+      }
+    }
+    list vrf {
+      key "name";
+      leaf name {
+        type string;
+      }
+      leaf id {
+        mandatory true;
+        type uint32;
+      }
+    }
+    container policy-options {
+      list policy {
+        key "name";
+        leaf "name" {
+          type string;
+        }
+        list entry {
+          key "number";
+          leaf "number" {
+            type uint32;
+          }
+          container "match" {
+            ext:sort "7";
+            leaf "prefix-set" {
+              type string;
+            }
+            leaf "community-set" {
+              type string;
+            }
+          }
+          leaf "apply" {
+            ext:sort "5";
+            type string;
+          }
+          container "set" {
+            ext:sort "3";
+            leaf "local-preference" {
+              type uint32;
+            }
+            leaf "med" {
+              type uint32;
+            }
+          }
+          leaf "action" {
+            ext:sort "1";
+            type enumeration {
+              enum accept;
+              enum reject;
+              enum pass;
+            }
+          }
+
+        }
+      }
+    }
+  }
+}

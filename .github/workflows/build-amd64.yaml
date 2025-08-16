@@ -1,0 +1,37 @@
+name: Build for amd64
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build for amd64
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Build cli
+        run: |
+          sudo apt update -y
+          sudo apt upgrade -y
+          sudo apt install -y protobuf-compiler libnanomsg-dev
+          cd cli
+          ./configure
+          make
+          echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | sudo tee /etc/apt/sources.list.d/goreleaser.list
+          sudo apt update
+          sudo apt install nfpm
+          cd ../packaging
+          make amd64
+
+      - name: Upload basefs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zebra-rs-amd64
+          path: |
+            ./packaging/*.deb
